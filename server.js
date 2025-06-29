@@ -9,9 +9,12 @@ const ACTIONS = require('./Actions');
 const app = express();
 const server = http.createServer(app);
 
-// === Configure CORS ===
+// ✅ Use your actual frontend URL here with https
+const FRONTEND_URL = "https://realtimefrontend-production.up.railway.app";
+
+// === CORS for REST API ===
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*', // replace with frontend URL in production
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true,
 }));
@@ -19,17 +22,18 @@ app.use(cors({
 // === WebSocket Setup ===
 const io = new Server(server, {
     cors: {
-        origin: process.env.CLIENT_URL || '*',
+        origin: FRONTEND_URL,
         methods: ['GET', 'POST'],
         credentials: true,
     }
 });
 
+// === Middleware ===
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// === Serve frontend in production ===
+// === Serve frontend build in production ===
 if (process.env.NODE_ENV === 'production') {
     const buildPath = path.join(__dirname, 'build');
     app.use(express.static(buildPath));
@@ -38,12 +42,12 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// === Test route ===
+// === Test Route ===
 app.get('/', (req, res) => {
     res.send('Backend running');
 });
 
-// === WebSocket logic ===
+// === WebSocket Logic ===
 const userSocketMap = {};
 
 function getAllConnectedClients(roomId) {
@@ -92,6 +96,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// === Start server ===
+// ✅ Use environment PORT or fallback
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
